@@ -2,15 +2,14 @@ using UnityEngine;
 
 public class PlanePilot : MonoBehaviour
 {
+    public DynamicJoystick joystick;  // Reference to the joystick
     public float speed = 50.0f;
 
-    // Called once at the start
     void Start()
     {
         Debug.Log("Plane pilot script added to: " + gameObject.name);
     }
 
-    // Called once per frame
     void Update()
     {
         // Move the camera to follow the plane
@@ -23,14 +22,15 @@ public class PlanePilot : MonoBehaviour
         transform.position += transform.forward * Time.deltaTime * speed;
         speed -= transform.forward.y * Time.deltaTime * 50.0f;
 
-        // Ensure speed does not drop below 35
         if (speed < 35.0f)
         {
             speed = 35.0f;
         }
 
-        // Rotate the plane based on player input
-        transform.Rotate(Input.GetAxis("Vertical"), 0.0f, -Input.GetAxis("Horizontal"));
+        // Rotate the plane using joystick input
+        float verticalInput = joystick.Vertical;  // Vertical input from joystick (up/down)
+        float horizontalInput = joystick.Horizontal;  // Horizontal input from joystick (left/right)
+        transform.Rotate(verticalInput, 0.0f, -horizontalInput);  // Apply joystick input to rotation
 
         // Check terrain height to prevent flying into the ground
         float terrainHeightWhereWeAre = Terrain.activeTerrain.SampleHeight(transform.position);
@@ -38,5 +38,5 @@ public class PlanePilot : MonoBehaviour
         {
             transform.position = new Vector3(transform.position.x, terrainHeightWhereWeAre, transform.position.z);
         }
-    }     
+    }
 }
