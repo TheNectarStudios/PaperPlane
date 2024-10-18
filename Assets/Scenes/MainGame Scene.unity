@@ -752,12 +752,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   joystick: {fileID: 322342550}
-  speed: 20
-  maxSpeed: 25
-  minSpeed: 35
+  speed: 50
+  maxSpeed: 50
+  minSpeed: 0
   altitudeSpeedMultiplier: 0.5
-  cameraTransform: {fileID: 330585546}
-  cameraOffset: {x: 0, y: 5, z: -10}
   smoothSpeed: 0.125
   rollTiltAmount: 30
   terrainLayer:
@@ -914,7 +912,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1378597907756057260
 Transform:
   m_ObjectHideFlags: 0
@@ -1013,7 +1011,7 @@ PrefabInstance:
     - target: {fileID: 3323773991810528923, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3847193002477244613, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
@@ -1068,12 +1066,12 @@ PrefabInstance:
     - target: {fileID: 4502617596588635558, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4662720347688617283, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5919023614793548476, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
@@ -1083,7 +1081,7 @@ PrefabInstance:
     - target: {fileID: 8147250129376565935, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -11,8 +11,8 @@ public class PaperPlanePilot : MonoBehaviour
     private float pitchSpeed = 30.0f;  
     public float altitudeSpeedMultiplier = 0.5f;  
 
-    public Transform cameraTransform;  
-    public Vector3 cameraOffset = new Vector3(0.0f, 5.0f, -10.0f);  
+    // public Transform cameraTransform;  
+    // public Vector3 cameraOffset = new Vector3(0.0f, 5.0f, -10.0f);  
     public float smoothSpeed = 0.125f;  
     public float rollTiltAmount = 30.0f;
 
@@ -26,7 +26,7 @@ public class PaperPlanePilot : MonoBehaviour
 
     public float maxTurnAngle = 45.0f;  // Maximum turning angle in degrees
 
-    private Vector3 cameraVelocity = Vector3.zero;  // Used for smoothing the camera
+    // private Vector3 cameraVelocity = Vector3.zero;  // Used for smoothing the camera
 
     public float stallSpeed = 8.0f;  // Speed at which the plane stalls
     public float gravityMultiplier = 0.98f;  // Factor for increasing speed during descent
@@ -47,6 +47,10 @@ public class PaperPlanePilot : MonoBehaviour
 
     void Update()
     {
+        Vector3 moveCamTo = transform.position - transform.forward * 10.0f + Vector3.up * 5.0f;
+        float bias = 0.96f;
+         Camera.main.transform.position = Camera.main.transform.position * bias + moveCamTo * (1.0f - bias);
+        Camera.main.transform.LookAt(transform.position + transform.forward * 30.0f);
         // Apply forward movement
         rb.velocity = transform.forward * speed;
 
@@ -69,8 +73,6 @@ public class PaperPlanePilot : MonoBehaviour
 
     void LateUpdate()
     {
-        // Follow the plane with the camera in LateUpdate for smoother movement
-        FollowCamera();
     }
 
     void ApplyYaw(float horizontalInput)
@@ -152,17 +154,17 @@ public class PaperPlanePilot : MonoBehaviour
         }
     }
 
-    void FollowCamera()
-    {
-        // Target position for the camera (relative to the plane with offset)
-        Vector3 targetPosition = transform.position + cameraOffset;
+    // void FollowCamera()
+    // {
+    //     // Target position for the camera (relative to the plane with offset)
+    //     Vector3 targetPosition = transform.position + cameraOffset;
 
-        // Smoothly move the camera to the target position using SmoothDamp
-        cameraTransform.position = Vector3.SmoothDamp(cameraTransform.position, targetPosition, ref cameraVelocity, smoothSpeed);
+    //     // Smoothly move the camera to the target position using SmoothDamp
+    //     cameraTransform.position = Vector3.SmoothDamp(cameraTransform.position, targetPosition, ref cameraVelocity, smoothSpeed);
 
-        // Make the camera look at the plane
-        cameraTransform.LookAt(transform.position);
-    }
+    //     // Make the camera look at the plane
+    //     cameraTransform.LookAt(transform.position);
+    // }
 
     // Helper function to clamp angles between -maxTurnAngle and maxTurnAngle
     float ClampAngle(float angle, float min, float max)
