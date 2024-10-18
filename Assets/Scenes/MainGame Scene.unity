@@ -752,13 +752,58 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   joystick: {fileID: 322342550}
-  speed: 50
+  speed: 20
+  maxSpeed: 25
+  minSpeed: 35
+  altitudeSpeedMultiplier: 0.5
+  cameraTransform: {fileID: 330585546}
+  cameraOffset: {x: 0, y: 5, z: -10}
+  smoothSpeed: 0.125
+  rollTiltAmount: 30
+  terrainLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  minAltitude: 0
+  raycastDistance: 20
+  rb: {fileID: 0}
+  liftForce: 5
+  gravityScale: 0.5
+  maxTurnAngle: 45
+  stallSpeed: 8
+  gravityMultiplier: 0.98
 --- !u!4 &1573875835 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3847193002477244613, guid: 9ad2f330d78e78341bf322ce4daaaa69,
     type: 3}
   m_PrefabInstance: {fileID: 5012232922549602358}
   m_PrefabAsset: {fileID: 0}
+--- !u!54 &1573875836
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1573875832}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &2088322286
 GameObject:
   m_ObjectHideFlags: 0
@@ -770,7 +815,7 @@ GameObject:
   - component: {fileID: 2088322289}
   - component: {fileID: 2088322288}
   - component: {fileID: 2088322287}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Terrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -862,6 +907,7 @@ GameObject:
   - component: {fileID: 1378597907756057260}
   - component: {fileID: 2158499767420106469}
   - component: {fileID: 1762387094535556710}
+  - component: {fileID: 2158499767420106470}
   m_Layer: 0
   m_Name: Mesh1_Model
   m_TagString: Untagged
@@ -934,6 +980,28 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1026966296653032998}
   m_Mesh: {fileID: -4317298856758795638, guid: 4ea446c8776933948bcb6c9ebe7412ce, type: 3}
+--- !u!64 &2158499767420106470
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1026966296653032998}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -4317298856758795638, guid: 4ea446c8776933948bcb6c9ebe7412ce, type: 3}
 --- !u!1001 &5012232922549602358
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -955,7 +1023,7 @@ PrefabInstance:
     - target: {fileID: 3847193002477244613, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 8.98
       objectReference: {fileID: 0}
     - target: {fileID: 3847193002477244613, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
@@ -1029,6 +1097,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1573875834}
+    - targetCorrespondingSourceObject: {fileID: 5919023614793548476, guid: 9ad2f330d78e78341bf322ce4daaaa69,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1573875836}
   m_SourcePrefab: {fileID: 100100000, guid: 9ad2f330d78e78341bf322ce4daaaa69, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
