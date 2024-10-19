@@ -709,7 +709,7 @@ MonoBehaviour:
   player: {fileID: 59956060}
   terrainChunkSize: 100
   chunksVisible: 3
-  geometricShapeCount: 10
+  geometricShapeCount: 2
 --- !u!4 &1134916966
 Transform:
   m_ObjectHideFlags: 0
@@ -826,6 +826,7 @@ MonoBehaviour:
   liftForce: 5
   gravityScale: 0.5
   maxTurnAngle: 45
+  rollSmoothTime: 0.5
   stallSpeed: 8
   gravityMultiplier: 0.98
 --- !u!4 &1573875835 stripped
@@ -988,7 +989,7 @@ PrefabInstance:
     - target: {fileID: 3847193002477244613, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.98
+      value: 87
       objectReference: {fileID: 0}
     - target: {fileID: 3847193002477244613, guid: 9ad2f330d78e78341bf322ce4daaaa69,
         type: 3}

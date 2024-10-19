@@ -112,7 +112,7 @@ void SpawnGeometricShapes(Transform terrainTransform)
         shapeInstance.transform.SetParent(terrainTransform);  // Set the shape as a child of the terrain for proper chunk management
 
         // Randomize the scale of the shape
-        float randomScale = Random.Range(1f, 10f); // Adjust the range as needed
+        float randomScale = Random.Range(20f, 40f); // Adjust the range as needed
         shapeInstance.transform.localScale = new Vector3(randomScale, randomScale, randomScale);
     }
 }
