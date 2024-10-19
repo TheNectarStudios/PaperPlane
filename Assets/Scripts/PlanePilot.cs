@@ -2,130 +2,129 @@ using UnityEngine;
 
 public class PaperPlanePilot : MonoBehaviour
 {
-    public DynamicJoystick joystick;  
-    public float speed = 20.0f;  
+    public DynamicJoystick joystick;
+    public float speed = 20.0f;
     public float maxSpeed = 25.0f;
-    public float minSpeed = 5.0f;  
-    private float drag = 0.995f;  
-    private float turnSpeed = 50.0f;  
-    private float pitchSpeed = 30.0f;  
-    public float altitudeSpeedMultiplier = 0.5f;  
+    public float minSpeed = 5.0f;
+    private float drag = 0.995f;
+    private float turnSpeed = 50.0f;
+    private float pitchSpeed = 30.0f;
+    public float altitudeSpeedMultiplier = 0.5f;
 
-    // public Transform cameraTransform;  
-    // public Vector3 cameraOffset = new Vector3(0.0f, 5.0f, -10.0f);  
-    public float smoothSpeed = 0.125f;  
-    public float rollTiltAmount = 30.0f;
+    public float smoothSpeed = 0.125f;
 
-    public LayerMask terrainLayer;  
-    public float minAltitude = 10.0f;  
-    public float raycastDistance = 20.0f;  
+    public LayerMask terrainLayer;
+    public float minAltitude = 10.0f;
+    public float raycastDistance = 20.0f;
 
-    public Rigidbody rb;  // Reference to the Rigidbody component
-    public float liftForce = 5.0f;  // Force applied upwards to simulate lift
-    public float gravityScale = 0.5f;  // Scale down gravity to slow descent
+    public Rigidbody rb;
+    public float liftForce = 5.0f;
+    public float gravityScale = 0.5f;
 
-    public float maxTurnAngle = 45.0f;  // Maximum turning angle in degrees
+    public float maxTurnAngle = 45.0f;
+    public float rollSmoothTime = 0.5f;  // Time taken for roll to smoothly return to normal
 
-    // private Vector3 cameraVelocity = Vector3.zero;  // Used for smoothing the camera
+    public float stallSpeed = 8.0f;
+    public float gravityMultiplier = 0.98f;
 
-    public float stallSpeed = 8.0f;  // Speed at which the plane stalls
-    public float gravityMultiplier = 0.98f;  // Factor for increasing speed during descent
+    private float targetRollAngle = 0f; // Target roll angle we will smooth towards
+    private float currentRollAngle = 0f; // Current roll angle for smoothing
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        // Set up rigidbody drag and gravity settings
-        rb.drag = 2.0f;  // Increase drag to slow down falling speed
-        rb.angularDrag = 1.5f;  // Higher angular drag to prevent rapid rotations
+        rb.drag = 2.0f;
+        rb.angularDrag = 1.5f;
         rb.useGravity = true;
-        rb.mass = 0.1f;  // Lower mass for a lightweight paper plane effect
-        rb.AddForce(Vector3.up * liftForce, ForceMode.Force);  // Initial lift
+        rb.mass = 0.1f;
+        rb.AddForce(Vector3.up * liftForce, ForceMode.Force);
 
-        Physics.gravity = new Vector3(0, -9.81f * gravityScale, 0);  // Scaled-down gravity
+        Physics.gravity = new Vector3(0, -9.81f * gravityScale, 0);
     }
 
     void Update()
     {
         Vector3 moveCamTo = transform.position - transform.forward * 10.0f + Vector3.up * 5.0f;
         float bias = 0.96f;
-         Camera.main.transform.position = Camera.main.transform.position * bias + moveCamTo * (1.0f - bias);
+        Camera.main.transform.position = Camera.main.transform.position * bias + moveCamTo * (1.0f - bias);
         Camera.main.transform.LookAt(transform.position + transform.forward * 30.0f);
-        // Apply forward movement
+
         rb.velocity = transform.forward * speed;
 
-        // Joystick inputs for horizontal and vertical movement
         float horizontalInput = joystick.Horizontal;
         float verticalInput = joystick.Vertical;
 
-        // Apply limited yaw rotation (left-right turning)
+        // Apply yaw (left-right turning)
         ApplyYaw(horizontalInput);
 
-        // Apply pitch for altitude adjustment
+        // Apply pitch (altitude adjustment)
         ApplyPitch(verticalInput);
 
-        // Adjust speed based on altitude and energy conservation principles
+        // Adjust speed based on vertical input
         AdjustSpeedWithAltitude(verticalInput);
 
         // Prevent the plane from going through terrain
         CheckTerrainCollision();
     }
 
-    void LateUpdate()
-    {
-    }
-
     void ApplyYaw(float horizontalInput)
     {
-        // Get the current yaw (rotation around the Y axis)
+        // Yaw (rotation around Y axis)
         float currentYaw = transform.eulerAngles.y;
-
-        // Calculate the new yaw after applying the input
         float targetYaw = currentYaw + (horizontalInput * turnSpeed * Time.deltaTime);
+        transform.eulerAngles = new Vector3(transform.eulerAngles.x, targetYaw, transform.eulerAngles.z);
 
-        // Clamp the yaw to ensure it stays within the allowed angle range
-        float clampedYaw = ClampAngle(targetYaw, -maxTurnAngle, maxTurnAngle);
+        // Handle roll (tilting for visual feedback)
+        if (Mathf.Abs(horizontalInput) > 0.01f)
+        {
+            // Set the target roll angle based on the joystick input
+            targetRollAngle = Mathf.Lerp(0, 45, Mathf.Abs(horizontalInput));
+            targetRollAngle = horizontalInput < 0 ? -targetRollAngle : targetRollAngle;  // Negative roll for left turns
+        }
+        else
+        {
+            // Smoothly return the roll angle to zero when no input is detected
+            targetRollAngle = 0f;
+        }
 
-        // Apply the clamped yaw back to the plane
-        transform.eulerAngles = new Vector3(transform.eulerAngles.x, clampedYaw, transform.eulerAngles.z);
+        // Smoothly interpolate the roll angle back to the target roll angle
+        currentRollAngle = Mathf.Lerp(currentRollAngle, targetRollAngle, Time.deltaTime / rollSmoothTime);
+
+        // Apply roll to the plane (rotation around Z axis)
+        transform.eulerAngles = new Vector3(transform.eulerAngles.x, transform.eulerAngles.y, -currentRollAngle);
     }
 
     void ApplyPitch(float verticalInput)
     {
-        // Block descending if terrain is too close
         if (verticalInput < 0 && !CanDescend())
         {
             verticalInput = 0;
         }
 
-        // Manually adjust the pitch angle without rotating the plane on the X-axis
         float currentPitch = transform.eulerAngles.x;
         float targetPitch = currentPitch - (verticalInput * pitchSpeed * Time.deltaTime);
 
-        // Apply only pitch without changing any other axis rotations
         transform.eulerAngles = new Vector3(targetPitch, transform.eulerAngles.y, transform.eulerAngles.z);
     }
 
     void AdjustSpeedWithAltitude(float verticalInput)
     {
-        // Adjust speed based on the vertical input and altitude
-        if (verticalInput > 0) // Ascending
+        if (verticalInput > 0) 
         {
             speed -= verticalInput * altitudeSpeedMultiplier;
 
-            // If speed drops below stall speed, stop ascending and start descending
             if (speed < stallSpeed)
             {
-                speed = stallSpeed;  // Prevent speed from dropping too much
-                verticalInput = -1.0f;  // Force the plane to descend
+                speed = stallSpeed;
+                verticalInput = -1.0f;
             }
         }
-        else if (verticalInput < 0) // Descending
+        else if (verticalInput < 0)
         {
             speed += Mathf.Abs(verticalInput) * altitudeSpeedMultiplier * gravityMultiplier;
         }
 
-        // Clamp speed within the min and max limits
         speed = Mathf.Clamp(speed, minSpeed, maxSpeed);
     }
 
@@ -136,10 +135,10 @@ public class PaperPlanePilot : MonoBehaviour
         {
             if (hit.distance < minAltitude)
             {
-                return false;  
+                return false;
             }
         }
-        return true;  
+        return true;
     }
 
     void CheckTerrainCollision()
@@ -154,19 +153,6 @@ public class PaperPlanePilot : MonoBehaviour
         }
     }
 
-    // void FollowCamera()
-    // {
-    //     // Target position for the camera (relative to the plane with offset)
-    //     Vector3 targetPosition = transform.position + cameraOffset;
-
-    //     // Smoothly move the camera to the target position using SmoothDamp
-    //     cameraTransform.position = Vector3.SmoothDamp(cameraTransform.position, targetPosition, ref cameraVelocity, smoothSpeed);
-
-    //     // Make the camera look at the plane
-    //     cameraTransform.LookAt(transform.position);
-    // }
-
-    // Helper function to clamp angles between -maxTurnAngle and maxTurnAngle
     float ClampAngle(float angle, float min, float max)
     {
         if (angle > 180) angle -= 360;

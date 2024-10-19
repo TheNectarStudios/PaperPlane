@@ -682,7 +682,7 @@ GameObject:
   - component: {fileID: 1134916966}
   - component: {fileID: 1134916965}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: Terrain generator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -702,9 +702,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrainPrefab: {fileID: 565445132718758391, guid: 13a92f87a577068439f748b36fca08b4,
     type: 3}
+  geometricPrefabs:
+  - {fileID: 5609025196279980258, guid: 2402809439bd55849aee7d4c3cd446f9, type: 3}
+  - {fileID: 6093003068114795880, guid: 412211ae0534f3e46a652b54c21a47c7, type: 3}
+  - {fileID: 5919023614793548476, guid: 9ad2f330d78e78341bf322ce4daaaa69, type: 3}
   player: {fileID: 59956060}
   terrainChunkSize: 100
   chunksVisible: 3
+  geometricShapeCount: 10
 --- !u!4 &1134916966
 Transform:
   m_ObjectHideFlags: 0
@@ -807,12 +812,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   joystick: {fileID: 322342550}
-  speed: 50
-  maxSpeed: 50
-  minSpeed: 0
+  speed: 55
+  maxSpeed: 55
+  minSpeed: -15
   altitudeSpeedMultiplier: 0.5
-  smoothSpeed: 0.125
-  rollTiltAmount: 30
+  smoothSpeed: 0.05
   terrainLayer:
     serializedVersion: 2
     m_Bits: 8

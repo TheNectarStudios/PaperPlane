@@ -4,9 +4,11 @@ using UnityEngine;
 public class TerrainGenerator : MonoBehaviour
 {
     public GameObject terrainPrefab;  // Assign your terrain prefab in the inspector
+    public GameObject[] geometricPrefabs; // Array of geometric shapes to spawn
     public Transform player;          // The player that moves forward
     public int terrainChunkSize = 1000; // Adjusted for 1000x1000 terrain chunks
     public int chunksVisible = 2;      // Reduce this to lower the number of loaded chunks (2 chunks in each direction)
+    public int geometricShapeCount = 10; // Number of shapes to spawn per chunk
 
     private Vector3 lastPlayerPosition;
     private Dictionary<Vector2, GameObject> terrainChunks = new Dictionary<Vector2, GameObject>();
@@ -86,5 +88,33 @@ public class TerrainGenerator : MonoBehaviour
         Vector3 spawnPosition = new Vector3(chunkCoords.x * terrainChunkSize, 0, chunkCoords.y * terrainChunkSize);
         GameObject newChunk = Instantiate(terrainPrefab, spawnPosition, Quaternion.identity);
         terrainChunks.Add(chunkCoords, newChunk);
+
+        // Spawn geometric shapes on the new chunk
+        SpawnGeometricShapes(newChunk.transform);
     }
+
+void SpawnGeometricShapes(Transform terrainTransform)
+{
+    for (int i = 0; i < geometricShapeCount; i++)
+    {
+        // Select a random geometric shape from the array
+        GameObject randomShape = geometricPrefabs[Random.Range(0, geometricPrefabs.Length)];
+
+        // Randomize the position within the terrain chunk
+        Vector3 randomPosition = new Vector3(
+            Random.Range(-terrainChunkSize / 2, terrainChunkSize / 2),  // X-axis within the chunk width
+            Random.Range(0f, 5f),  // Y-axis for height (adjust based on your design)
+            Random.Range(-terrainChunkSize / 2, terrainChunkSize / 2)   // Z-axis within the chunk length
+        );
+
+        // Instantiate the shape on the terrain
+        GameObject shapeInstance = Instantiate(randomShape, randomPosition + terrainTransform.position, Quaternion.identity);
+        shapeInstance.transform.SetParent(terrainTransform);  // Set the shape as a child of the terrain for proper chunk management
+
+        // Randomize the scale of the shape
+        float randomScale = Random.Range(1f, 10f); // Adjust the range as needed
+        shapeInstance.transform.localScale = new Vector3(randomScale, randomScale, randomScale);
+    }
+}
+
 }
