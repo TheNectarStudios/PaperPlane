@@ -5,70 +5,86 @@ public class TerrainGenerator : MonoBehaviour
 {
     public GameObject terrainPrefab;  // Assign your terrain prefab in the inspector
     public Transform player;          // The player that moves forward
-    public int terrainChunkSize = 100; // Size of each terrain chunk (e.g., 100 units wide)
-    public int chunksVisible = 3;     // Number of chunks visible ahead of the player
+    public int terrainChunkSize = 1000; // Adjusted for 1000x1000 terrain chunks
+    public int chunksVisible = 2;      // Reduce this to lower the number of loaded chunks (2 chunks in each direction)
 
     private Vector3 lastPlayerPosition;
-    private Queue<GameObject> terrainChunks = new Queue<GameObject>();
-    private float terrainZOffset = 0;  // Z position where the next chunk will be spawned
+    private Dictionary<Vector2, GameObject> terrainChunks = new Dictionary<Vector2, GameObject>();
 
     void Start()
     {
-        // Check if the player has been assigned manually or find it by tag
+        // Ensure the player is assigned
         if (player == null)
         {
-            Debug.LogWarning("Player is not assigned in the Inspector, trying to find the player by tag.");
-            GameObject foundPlayer = GameObject.FindWithTag("Player"); // Ensure your player GameObject has the "Player" tag
-
+            Debug.LogWarning("Player is not assigned. Attempting to find player by tag.");
+            GameObject foundPlayer = GameObject.FindWithTag("Player");
             if (foundPlayer != null)
             {
                 player = foundPlayer.transform;
-                Debug.Log("Player found and assigned dynamically.");
             }
             else
             {
-                Debug.LogError("Player is not assigned and could not be found in the scene. Please assign the Player in the Inspector or ensure the Player has the 'Player' tag.");
-                return;  // Prevent further execution if the player is not assigned
+                Debug.LogError("Player is not assigned and could not be found. Please assign the Player in the Inspector.");
+                return;
             }
         }
 
-        // If player is assigned, initialize the player's position and terrain generation
         lastPlayerPosition = player.position;
         GenerateInitialTerrain();
     }
 
     void Update()
     {
-        // Check if the player has moved beyond the threshold to generate new terrain
-        if (player != null && player.position.z > lastPlayerPosition.z + terrainChunkSize)
+        if (player != null)
         {
-            SpawnTerrainChunk();
-            lastPlayerPosition = player.position;
+            GenerateTerrainAroundPlayer();
         }
     }
 
     void GenerateInitialTerrain()
     {
-        // Generate the initial terrain chunks
-        for (int i = 0; i < chunksVisible; i++)
+        // Generate the initial grid of terrain around the player
+        GenerateTerrainAroundPlayer();
+    }
+
+    void GenerateTerrainAroundPlayer()
+    {
+        int playerChunkX = Mathf.RoundToInt(player.position.x / terrainChunkSize);
+        int playerChunkZ = Mathf.RoundToInt(player.position.z / terrainChunkSize);
+
+        for (int zOffset = -chunksVisible; zOffset <= chunksVisible; zOffset++)
         {
-            SpawnTerrainChunk();
+            for (int xOffset = -chunksVisible; xOffset <= chunksVisible; xOffset++)
+            {
+                Vector2 chunkCoords = new Vector2(playerChunkX + xOffset, playerChunkZ + zOffset);
+                if (!terrainChunks.ContainsKey(chunkCoords))
+                {
+                    SpawnTerrainChunk(chunkCoords);
+                }
+            }
+        }
+
+        // Remove faraway chunks
+        List<Vector2> chunksToRemove = new List<Vector2>();
+        foreach (var chunk in terrainChunks)
+        {
+            if (Mathf.Abs(chunk.Key.x - playerChunkX) > chunksVisible || Mathf.Abs(chunk.Key.y - playerChunkZ) > chunksVisible)
+            {
+                chunksToRemove.Add(chunk.Key);
+            }
+        }
+
+        foreach (var chunkCoords in chunksToRemove)
+        {
+            Destroy(terrainChunks[chunkCoords]);
+            terrainChunks.Remove(chunkCoords);
         }
     }
 
-    void SpawnTerrainChunk()
+    void SpawnTerrainChunk(Vector2 chunkCoords)
     {
-        // Instantiate the terrain prefab at the next position
-        Vector3 spawnPosition = new Vector3(0, 0, terrainZOffset);
+        Vector3 spawnPosition = new Vector3(chunkCoords.x * terrainChunkSize, 0, chunkCoords.y * terrainChunkSize);
         GameObject newChunk = Instantiate(terrainPrefab, spawnPosition, Quaternion.identity);
-        terrainChunks.Enqueue(newChunk);
-        terrainZOffset += terrainChunkSize;
-
-        // Remove and destroy old terrain chunks that are far behind the player
-        if (terrainChunks.Count > chunksVisible)
-        {
-            GameObject oldChunk = terrainChunks.Dequeue();
-            Destroy(oldChunk);
-        }
+        terrainChunks.Add(chunkCoords, newChunk);
     }
 }
