@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;  // Make sure to include this for Button functionality
 
 public class PaperPlanePilot : MonoBehaviour
 {
@@ -30,6 +31,15 @@ public class PaperPlanePilot : MonoBehaviour
     private float targetRollAngle = 0f; // Target roll angle we will smooth towards
     private float currentRollAngle = 0f; // Current roll angle for smoothing
 
+    // Firing related variables
+    public Transform firePoint;  // Where bullets spawn from
+    public GameObject bulletPrefab;  // The player's bullet prefab
+    public float fireRate = 1.0f;  // Time between shots
+    private float fireTimer = 0f;
+    
+    // Button for firing
+    public Button fireButton;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -41,6 +51,9 @@ public class PaperPlanePilot : MonoBehaviour
         rb.AddForce(Vector3.up * liftForce, ForceMode.Force);
 
         Physics.gravity = new Vector3(0, -9.81f * gravityScale, 0);
+
+        // Hook the Fire function to the button's click event
+        fireButton.onClick.AddListener(Fire); 
     }
 
     void Update()
@@ -66,6 +79,8 @@ public class PaperPlanePilot : MonoBehaviour
 
         // Prevent the plane from going through terrain
         CheckTerrainCollision();
+        
+        fireTimer += Time.deltaTime;
     }
 
     void ApplyYaw(float horizontalInput)
@@ -153,9 +168,14 @@ public class PaperPlanePilot : MonoBehaviour
         }
     }
 
-    float ClampAngle(float angle, float min, float max)
+    void Fire()
     {
-        if (angle > 180) angle -= 360;
-        return Mathf.Clamp(angle, min, max);
+        if (fireTimer >= fireRate)
+        {
+            GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+            Rigidbody bulletRb = bullet.GetComponent<Rigidbody>();
+            bulletRb.velocity = transform.forward * 200f;  // Set bullet speed
+            fireTimer = 0f;
+        }
     }
 }
