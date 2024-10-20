@@ -2,53 +2,143 @@ using UnityEngine;
 
 public class EnemyAI : MonoBehaviour
 {
-    public float moveSpeed = 10f;  // Speed at which the enemy moves
-    public float rotationSpeed = 3f;  // Speed of turning to face the player
-    public float fireRange = 50f;  // Firing range of the enemy
-    public GameObject bulletPrefab;  // The bullet prefab for firing
+    public float moveSpeed = 20f;  // Speed of the enemy plane
+    public float despawnDistance; 
+    public float rotationSpeed = 2f;  // Speed of turning (banking)
+    public float fireRange = 80f;  // Firing range
+    public GameObject bulletPrefab;  // Bullet prefab for firing
     public Transform firePoint;  // The point where bullets are fired from
-    public float fireRate = 2.0f;  // Fire rate of the enemy
-    private float fireTimer = 0f;
-    
-    private Transform playerPlane;  // Reference to the player's plane
-    public float despawnDistance = 200f;  // Distance at which enemy despawns
-    private bool isDead = false;  // Track if enemy has been hit
+    public float fireRate = 1.5f;  // Fire rate
+    public float bankAngle = 45f;  // Maximum angle for banking
+    public float dodgeRange = 30f;  // Range to dodge objects
+    public LayerMask obstacleMask;  // Layer for detecting obstacles
+    public LayerMask enemyMask;  // Layer for detecting other enemies
+    public float obstacleAvoidanceStrength = 5f;  // Force applied to avoid obstacles
+    public float enemyAvoidanceRange = 20f;  // Minimum distance to maintain between enemies
+    public float abovePlayerHeight = 50f;  // Height to ascend above player before spamming fire
+    public ParticleSystem explosionEffect;
 
+    private float fireTimer = 0f;
+    private Transform playerPlane;
     private Rigidbody rb;
+    private bool isDodging = false;
+    private bool isSpammingFire = false;
+    private bool isDead = false;
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();  // Cache Rigidbody component
+        rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerPlane = player.transform;
+        }
     }
 
     private void Update()
     {
-        if (playerPlane == null || isDead) return;  // Exit if playerPlane is not assigned or enemy is dead
+        if (isDead || playerPlane == null) return;
 
-        // Check if the enemy is too far from the player and despawn
-        float distanceFromPlayer = Vector3.Distance(transform.position, playerPlane.position);
-        if (distanceFromPlayer > despawnDistance)
+        // Enemy fighter behaviors
+        AvoidObstacles();
+        AvoidOtherEnemies();
+        ManeuverAndFire();
+    }
+
+    private void AvoidObstacles()
+    {
+        // Use raycast to detect obstacles in front of the enemy
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, transform.forward, out hit, dodgeRange, obstacleMask))
         {
-            Destroy(gameObject);
-            return;
+            Vector3 avoidanceDirection = Vector3.Reflect(transform.forward, hit.normal);
+            rb.AddForce(avoidanceDirection * obstacleAvoidanceStrength, ForceMode.VelocityChange);
+            isDodging = true;
+        }
+        else
+        {
+            isDodging = false;
+        }
+    }
+
+    private void AvoidOtherEnemies()
+    {
+        // Use sphere overlap to check for nearby enemies and steer away from them
+        Collider[] enemiesNearby = Physics.OverlapSphere(transform.position, enemyAvoidanceRange, enemyMask);
+        foreach (Collider enemy in enemiesNearby)
+        {
+            if (enemy.transform != transform)
+            {
+                Vector3 awayFromEnemy = (transform.position - enemy.transform.position).normalized;
+                rb.AddForce(awayFromEnemy * obstacleAvoidanceStrength, ForceMode.VelocityChange);
+            }
+        }
+    }
+
+    private void ManeuverAndFire()
+    {
+        if (isDodging) return;  // Skip firing while dodging
+
+        // Ascend above the player occasionally to spam fire
+        float distanceToPlayer = Vector3.Distance(transform.position, playerPlane.position);
+        if (!isSpammingFire && distanceToPlayer <= fireRange)
+        {
+            if (Random.Range(0f, 1f) > 0.7f)  // Random chance to ascend and spam fire
+            {
+                AscendAndSpamFire();
+                return;
+            }
         }
 
-        // Move towards the player's plane
-        Vector3 direction = playerPlane.position - transform.position;
-        float distance = direction.magnitude;
+        // Move towards and engage the player normally
+        Vector3 directionToPlayer = playerPlane.position - transform.position;
+        directionToPlayer.Normalize();
 
-        // Rotate to face the player's plane
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+        // Apply banking effect
+        float angleDifference = Vector3.SignedAngle(transform.forward, directionToPlayer, Vector3.up);
+        float bank = Mathf.Clamp(-angleDifference / 90f, -1f, 1f);  // Bank based on turn
+        transform.Rotate(Vector3.forward, bank * bankAngle * Time.deltaTime);
 
         // Move forward
         transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
 
-        // If within range, fire at the player
-        if (distance <= fireRange)
+        if (distanceToPlayer <= fireRange)
         {
             HandleFiring();
         }
+    }
+
+    private void AscendAndSpamFire()
+    {
+        // Ascend above the player plane and spam fire while ascending
+        Vector3 ascendPosition = playerPlane.position + Vector3.up * abovePlayerHeight;
+        Vector3 directionToAscend = ascendPosition - transform.position;
+        Quaternion ascendRotation = Quaternion.LookRotation(directionToAscend);
+
+        transform.rotation = Quaternion.Slerp(transform.rotation, ascendRotation, rotationSpeed * Time.deltaTime);
+        transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+
+        // Start spamming fire when above the player
+        if (Vector3.Distance(transform.position, ascendPosition) < 10f)
+        {
+            StartCoroutine(SpamFire());
+        }
+    }
+
+    private System.Collections.IEnumerator SpamFire()
+    {
+        isSpammingFire = true;
+        for (int i = 0; i < 5; i++)  // Spam 5 bullets in quick succession
+        {
+            Fire();
+            yield return new WaitForSeconds(0.2f);  // Fire rapidly
+        }
+        isSpammingFire = false;
     }
 
     private void HandleFiring()
@@ -69,33 +159,37 @@ public class EnemyAI : MonoBehaviour
         bulletRb.velocity = transform.forward * 500f;  // Bullet speed
     }
 
-    // Handle collision with bullet
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Bullet"))
+        if (collision.gameObject.CompareTag("Bullet") && !isDead)
         {
             Die();
         }
     }
 
-    // Called when the enemy dies
     private void Die()
     {
         isDead = true;
 
-        // Disable enemy controls
+        // Update the kill counter
+        KillCounterManager killCounterManager = FindObjectOfType<KillCounterManager>();
+        if (killCounterManager != null)
+        {
+            killCounterManager.RegisterKill();
+        }
+
+        if (explosionEffect != null)
+        {
+            explosionEffect.transform.SetParent(null);
+            explosionEffect.Play();
+        }
         moveSpeed = 0;
         rotationSpeed = 0;
-
-        // Apply falling effect (simulate engine failure)
-        rb.useGravity = true;  // Let the plane fall due to gravity
-        rb.constraints = RigidbodyConstraints.None;  // Free the rigidbody
-
-        // Destroy enemy after 5 seconds
-        Destroy(gameObject, 5.0f);
+        rb.useGravity = true;
+        rb.constraints = RigidbodyConstraints.None;
+        Destroy(gameObject, 5f);
     }
 
-    // This method allows setting the playerPlane from outside the script
     public void SetPlayer(Transform player)
     {
         playerPlane = player;

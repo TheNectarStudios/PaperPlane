@@ -1,51 +1,76 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    public GameObject enemyPrefab;  // The enemy plane prefab
-    public Transform playerPlane;  // Reference to the player's plane
-    public float spawnRange = 200f;  // Range within which enemies will spawn
-    public int maxEnemies = 5;  // Maximum number of enemies at a time
-    public float spawnInterval = 5.0f;  // Time between spawns
-    public float despawnDistance = 200f;  // Distance after which enemies despawn
+    public GameObject enemyPrefab;  // Assign your enemy prefab in the inspector
+    public Transform player;         // The player that moves
+    public float spawnRange = 100f; // Range around the player to spawn enemies
+    public float despawnDistance = 200f; // Distance at which enemies are despawned
+    public int maxEnemies = 10;     // Max number of enemies to spawn
+    private List<GameObject> enemies = new List<GameObject>();
 
-    private float spawnTimer = 0f;
-    private int currentEnemies = 0;
-
-    private void Update()
+    private void Start()
     {
-        spawnTimer += Time.deltaTime;
-
-        if (spawnTimer >= spawnInterval && currentEnemies < maxEnemies)
+        // Ensure the player is assigned
+        if (player == null)
         {
-            SpawnEnemy();
-            spawnTimer = 0f;
+            Debug.LogWarning("Player is not assigned. Attempting to find player by tag.");
+            GameObject foundPlayer = GameObject.FindWithTag("Player");
+            if (foundPlayer != null)
+            {
+                player = foundPlayer.transform;
+            }
+            else
+            {
+                Debug.LogError("Player not found! Please assign the Player in the Inspector.");
+                return;
+            }
+        }
+
+        // Start spawning enemies
+        StartCoroutine(SpawnEnemies());
+    }
+
+    private IEnumerator SpawnEnemies()
+    {
+        while (true)
+        {
+            // Check if the number of enemies is less than the max allowed
+            if (enemies.Count < maxEnemies)
+            {
+                Vector3 randomOffset = new Vector3(
+                    UnityEngine.Random.Range(-spawnRange, spawnRange),
+                    0,
+                    UnityEngine.Random.Range(-spawnRange, spawnRange)
+                );
+
+                // Calculate spawn position
+                Vector3 spawnPosition = player.position + randomOffset;
+                GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+                enemies.Add(enemy);
+                EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
+                if (enemyAI != null)
+                {
+                    enemyAI.despawnDistance = despawnDistance; // Set despawn distance
+                }
+            }
+
+            yield return new WaitForSeconds(1f); // Adjust spawn rate here
         }
     }
 
-    private void SpawnEnemy()
+    private void Update()
     {
-        // Generate a random position near the player's plane
-        Vector3 randomOffset = new Vector3(
-            Random.Range(-spawnRange, spawnRange),
-            Random.Range(10f, 50f),  // Keep enemies in the air
-            Random.Range(-spawnRange, spawnRange)
-        );
-        Vector3 spawnPosition = playerPlane.position + randomOffset;
-
-        // Spawn the enemy
-        GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
-        
-        // Set the player's plane on the enemy AI script
-        EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
-        if (enemyAI != null)
+        // Check for enemies to despawn
+        for (int i = enemies.Count - 1; i >= 0; i--)
         {
-            enemyAI.SetPlayer(playerPlane);  // Assign the player's plane to the enemy
-            enemyAI.despawnDistance = despawnDistance;  // Set despawn distance
+            if (enemies[i] == null || Vector3.Distance(enemies[i].transform.position, player.position) > despawnDistance)
+            {
+                Destroy(enemies[i]);
+                enemies.RemoveAt(i);
+            }
         }
-
-        currentEnemies++;  // Increment enemy count
-
-        // Decrement the count when enemy is destroyed (handled in EnemyAI)
     }
 }
