@@ -1055,8 +1055,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   joystick: {fileID: 322342550}
-  speed: 50
-  maxSpeed: 75
+  speed: 70
+  maxSpeed: 85
   minSpeed: 20
   altitudeSpeedMultiplier: 0.5
   smoothSpeed: 0.05

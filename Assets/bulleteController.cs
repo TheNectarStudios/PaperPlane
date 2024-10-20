@@ -4,6 +4,7 @@ public class Bullet : MonoBehaviour
 {
     public GameObject hitEffectPrefab;  // Particle effect to play on collision
     private bool hasCollided = false;   // To ensure the effect only plays on first collision
+     public bool IsFromPlayer { get; set; }  // This will be set by the firing code
 
     void Start()
     {

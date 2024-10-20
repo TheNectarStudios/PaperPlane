@@ -397,15 +397,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008516981d5723249b08341e2af3c1bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 0
+  moveSpeed: 7
+  despawnDistance: 200
   rotationSpeed: 2
   fireRange: 100
   bulletPrefab: {fileID: 1164219440960762774, guid: 473fd4d1c9ef4714f841065962afeb73,
     type: 3}
   firePoint: {fileID: 5077669654028361684}
-  fireRate: 2
+  fireRate: 0.8
   bankAngle: 45
-  despawnDistance: 200
+  dodgeRange: 30
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  enemyMask:
+    serializedVersion: 2
+    m_Bits: 0
+  obstacleAvoidanceStrength: 5
+  enemyAvoidanceRange: 20
+  abovePlayerHeight: 50
+  explosionEffect: {fileID: 0}
 --- !u!65 &7037738547102856912
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -425,8 +436,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 6, y: 6, z: 6}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 4.3349447, y: 3.1107926, z: 5.2454605}
+  m_Center: {x: -0.00016403198, y: 1.1949856, z: -0.62273026}
 --- !u!54 &7863817177779831619
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -36,7 +36,7 @@ public class PaperPlanePilot : MonoBehaviour
     public GameObject bulletPrefab;  // The player's bullet prefab
     public float fireRate = 1.0f;  // Time between shots
     private float fireTimer = 0f;
-    
+
     // Button for firing
     public Button fireButton;
 
@@ -53,7 +53,7 @@ public class PaperPlanePilot : MonoBehaviour
         Physics.gravity = new Vector3(0, -9.81f * gravityScale, 0);
 
         // Hook the Fire function to the button's click event
-        fireButton.onClick.AddListener(Fire); 
+        fireButton.onClick.AddListener(Fire);
     }
 
     void Update()
@@ -79,7 +79,7 @@ public class PaperPlanePilot : MonoBehaviour
 
         // Prevent the plane from going through terrain
         CheckTerrainCollision();
-        
+
         fireTimer += Time.deltaTime;
     }
 
@@ -125,7 +125,7 @@ public class PaperPlanePilot : MonoBehaviour
 
     void AdjustSpeedWithAltitude(float verticalInput)
     {
-        if (verticalInput > 0) 
+        if (verticalInput > 0)
         {
             speed -= verticalInput * altitudeSpeedMultiplier;
 
@@ -176,6 +176,11 @@ public class PaperPlanePilot : MonoBehaviour
             Rigidbody bulletRb = bullet.GetComponent<Rigidbody>();
             bulletRb.velocity = transform.forward * 200f;  // Set bullet speed
             fireTimer = 0f;
+            Bullet bulletScript = bullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.IsFromPlayer = true;  // Set the bullet source
+            }
         }
     }
 }

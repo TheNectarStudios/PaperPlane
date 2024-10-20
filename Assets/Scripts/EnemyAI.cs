@@ -163,7 +163,11 @@ public class EnemyAI : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bullet") && !isDead)
         {
-            Die();
+            // Check if the bullet is from the player
+            if (collision.gameObject.GetComponent<Bullet>().IsFromPlayer)  // Assuming you have a Bullet script with an IsFromPlayer property
+            {
+                Die();
+            }
         }
     }
 
