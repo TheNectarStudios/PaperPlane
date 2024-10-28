@@ -1750,16 +1750,23 @@ MonoBehaviour:
   maxSpeed: 105
   minSpeed: 20
   altitudeSpeedMultiplier: 1
+  smoothSpeed: 0.125
   terrainLayer:
     serializedVersion: 2
     m_Bits: 8
   minAltitude: 0
   raycastDistance: 20
-  rb: {fileID: 0}
+  rb: {fileID: 1573875836}
   liftForce: 5
   gravityScale: 0.5
+  maxTurnAngle: 45
+  rollSmoothTime: 0.5
   stallSpeed: 20.44
   gravityMultiplier: 0.98
+  firePoint: {fileID: 515022634}
+  bulletPrefab: {fileID: 1164219440960762774, guid: 473fd4d1c9ef4714f841065962afeb73,
+    type: 3}
+  fireRate: 0.05
   fireButton: {fileID: 1022686746}
   brakeButton: {fileID: 207147542}
   boostButton: {fileID: 773190231}

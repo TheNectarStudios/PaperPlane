@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class PaperPlanePilot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+public class PaperPlanePilot : MonoBehaviour
 {
     public DynamicJoystick joystick;
     public float speed = 20.0f;
@@ -45,7 +45,6 @@ public class PaperPlanePilot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     private bool isBraking = false;
     private bool isBoosting = false;
     private float brakeBoostDuration = 3.0f; // Duration to reach min/max speed
-    private float brakeBoostTimer = 0.0f;
 
     private void Start()
     {
@@ -206,32 +205,6 @@ public class PaperPlanePilot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     {
         speed = Mathf.MoveTowards(speed, maxSpeed, (maxSpeed - minSpeed) / brakeBoostDuration * Time.deltaTime);
         if (speed >= maxSpeed)
-        {
-            isBoosting = false;
-        }
-    }
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        if (eventData.pointerPress == brakeButton.gameObject)
-        {
-            isBraking = true;
-            isBoosting = false;
-        }
-        else if (eventData.pointerPress == boostButton.gameObject)
-        {
-            isBoosting = true;
-            isBraking = false;
-        }
-    }
-
-    public void OnPointerUp(PointerEventData eventData)
-    {
-        if (eventData.pointerPress == brakeButton.gameObject)
-        {
-            isBraking = false;
-        }
-        else if (eventData.pointerPress == boostButton.gameObject)
         {
             isBoosting = false;
         }
