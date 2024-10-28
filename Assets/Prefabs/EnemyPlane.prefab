@@ -397,26 +397,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008516981d5723249b08341e2af3c1bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 7
-  despawnDistance: 200
-  rotationSpeed: 2
-  fireRange: 100
+  despawnDistance: 1014.9
+  moveSpeed: 2.07
+  rotationSpeed: 0.87
+  attackDistance: 253.1
+  fireRange: 150.6
   bulletPrefab: {fileID: 1164219440960762774, guid: 473fd4d1c9ef4714f841065962afeb73,
     type: 3}
   firePoint: {fileID: 5077669654028361684}
-  fireRate: 0.8
-  bankAngle: 45
-  dodgeRange: 30
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
-  enemyMask:
-    serializedVersion: 2
-    m_Bits: 0
-  obstacleAvoidanceStrength: 5
-  enemyAvoidanceRange: 20
-  abovePlayerHeight: 50
-  explosionEffect: {fileID: 0}
+  fireRate: 0.31
+  circleRadius: 178.7
+  reengageTime: 12.47
+  explosionEffect: {fileID: 1978689737715041618, guid: afa54037ffe627545886e2741abb365d,
+    type: 3}
 --- !u!65 &7037738547102856912
 BoxCollider:
   m_ObjectHideFlags: 0

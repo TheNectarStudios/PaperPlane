@@ -13,7 +13,7 @@ public class DynamicJoystick : Joystick
     {
         MoveThreshold = moveThreshold;
         base.Start();
-        background.gameObject.SetActive(false); // Hide joystick background initially
+        // background.gameObject.SetActive(false); // Hide joystick background initially
     }
 
     public override void OnPointerDown(PointerEventData eventData)
@@ -26,7 +26,7 @@ public class DynamicJoystick : Joystick
 
     public override void OnPointerUp(PointerEventData eventData)
     {
-        background.gameObject.SetActive(false); // Hide joystick background when touch ends
+        // background.gameObject.SetActive(false); // Hide joystick background when touch ends
         base.OnPointerUp(eventData);
     }
 
