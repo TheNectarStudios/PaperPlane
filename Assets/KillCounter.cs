@@ -19,6 +19,6 @@ public class KillCounter : MonoBehaviour
 
     private void UpdateKillCountText()
     {
-        killCountText.text = "Kills: " + killCount.ToString();
+        killCountText.text = "" + killCount.ToString();
     }
 }

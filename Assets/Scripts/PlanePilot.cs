@@ -1,7 +1,8 @@
 using UnityEngine;
-using UnityEngine.UI;  // Make sure to include this for Button functionality
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class PaperPlanePilot : MonoBehaviour
+public class PaperPlanePilot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public DynamicJoystick joystick;
     public float speed = 20.0f;
@@ -11,7 +12,6 @@ public class PaperPlanePilot : MonoBehaviour
     private float turnSpeed = 50.0f;
     private float pitchSpeed = 30.0f;
     public float altitudeSpeedMultiplier = 0.5f;
-
     public float smoothSpeed = 0.125f;
 
     public LayerMask terrainLayer;
@@ -23,24 +23,31 @@ public class PaperPlanePilot : MonoBehaviour
     public float gravityScale = 0.5f;
 
     public float maxTurnAngle = 45.0f;
-    public float rollSmoothTime = 0.5f;  // Time taken for roll to smoothly return to normal
+    public float rollSmoothTime = 0.5f;
 
     public float stallSpeed = 8.0f;
     public float gravityMultiplier = 0.98f;
 
-    private float targetRollAngle = 0f; // Target roll angle we will smooth towards
-    private float currentRollAngle = 0f; // Current roll angle for smoothing
+    private float targetRollAngle = 0f;
+    private float currentRollAngle = 0f;
 
     // Firing related variables
-    public Transform firePoint;  // Where bullets spawn from
-    public GameObject bulletPrefab;  // The player's bullet prefab
-    public float fireRate = 1.0f;  // Time between shots
+    public Transform firePoint;
+    public GameObject bulletPrefab;
+    public float fireRate = 1.0f;
     private float fireTimer = 0f;
 
-    // Button for firing
+    // UI Buttons
     public Button fireButton;
+    public Button brakeButton;
+    public Button boostButton;
 
-    void Start()
+    private bool isBraking = false;
+    private bool isBoosting = false;
+    private float brakeBoostDuration = 3.0f; // Duration to reach min/max speed
+    private float brakeBoostTimer = 0.0f;
+
+    private void Start()
     {
         rb = GetComponent<Rigidbody>();
 
@@ -54,9 +61,13 @@ public class PaperPlanePilot : MonoBehaviour
 
         // Hook the Fire function to the button's click event
         fireButton.onClick.AddListener(Fire);
+
+        // Assign brake and boost functions to respective buttons
+        brakeButton.onClick.AddListener(() => isBraking = true);
+        boostButton.onClick.AddListener(() => isBoosting = true);
     }
 
-    void Update()
+    private void Update()
     {
         Vector3 moveCamTo = transform.position - transform.forward * 10.0f + Vector3.up * 5.0f;
         float bias = 0.96f;
@@ -68,49 +79,45 @@ public class PaperPlanePilot : MonoBehaviour
         float horizontalInput = joystick.Horizontal;
         float verticalInput = joystick.Vertical;
 
-        // Apply yaw (left-right turning)
         ApplyYaw(horizontalInput);
-
-        // Apply pitch (altitude adjustment)
         ApplyPitch(verticalInput);
-
-        // Adjust speed based on vertical input
         AdjustSpeedWithAltitude(verticalInput);
-
-        // Prevent the plane from going through terrain
         CheckTerrainCollision();
 
         fireTimer += Time.deltaTime;
+
+        // Apply gradual braking or boosting over time
+        if (isBraking)
+        {
+            GradualBrake();
+        }
+        else if (isBoosting)
+        {
+            GradualBoost();
+        }
     }
 
-    void ApplyYaw(float horizontalInput)
+    private void ApplyYaw(float horizontalInput)
     {
-        // Yaw (rotation around Y axis)
         float currentYaw = transform.eulerAngles.y;
         float targetYaw = currentYaw + (horizontalInput * turnSpeed * Time.deltaTime);
         transform.eulerAngles = new Vector3(transform.eulerAngles.x, targetYaw, transform.eulerAngles.z);
 
-        // Handle roll (tilting for visual feedback)
         if (Mathf.Abs(horizontalInput) > 0.01f)
         {
-            // Set the target roll angle based on the joystick input
             targetRollAngle = Mathf.Lerp(0, 45, Mathf.Abs(horizontalInput));
-            targetRollAngle = horizontalInput < 0 ? -targetRollAngle : targetRollAngle;  // Negative roll for left turns
+            targetRollAngle = horizontalInput < 0 ? -targetRollAngle : targetRollAngle;
         }
         else
         {
-            // Smoothly return the roll angle to zero when no input is detected
             targetRollAngle = 0f;
         }
 
-        // Smoothly interpolate the roll angle back to the target roll angle
         currentRollAngle = Mathf.Lerp(currentRollAngle, targetRollAngle, Time.deltaTime / rollSmoothTime);
-
-        // Apply roll to the plane (rotation around Z axis)
         transform.eulerAngles = new Vector3(transform.eulerAngles.x, transform.eulerAngles.y, -currentRollAngle);
     }
 
-    void ApplyPitch(float verticalInput)
+    private void ApplyPitch(float verticalInput)
     {
         if (verticalInput < 0 && !CanDescend())
         {
@@ -123,7 +130,7 @@ public class PaperPlanePilot : MonoBehaviour
         transform.eulerAngles = new Vector3(targetPitch, transform.eulerAngles.y, transform.eulerAngles.z);
     }
 
-    void AdjustSpeedWithAltitude(float verticalInput)
+    private void AdjustSpeedWithAltitude(float verticalInput)
     {
         if (verticalInput > 0)
         {
@@ -143,7 +150,7 @@ public class PaperPlanePilot : MonoBehaviour
         speed = Mathf.Clamp(speed, minSpeed, maxSpeed);
     }
 
-    bool CanDescend()
+    private bool CanDescend()
     {
         RaycastHit hit;
         if (Physics.Raycast(transform.position, Vector3.down, out hit, raycastDistance, terrainLayer))
@@ -156,7 +163,7 @@ public class PaperPlanePilot : MonoBehaviour
         return true;
     }
 
-    void CheckTerrainCollision()
+    private void CheckTerrainCollision()
     {
         RaycastHit hit;
         if (Physics.Raycast(transform.position, Vector3.down, out hit, raycastDistance, terrainLayer))
@@ -168,19 +175,65 @@ public class PaperPlanePilot : MonoBehaviour
         }
     }
 
-    void Fire()
+    private void Fire()
     {
         if (fireTimer >= fireRate)
         {
             GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
             Rigidbody bulletRb = bullet.GetComponent<Rigidbody>();
-            bulletRb.velocity = transform.forward * 200f;  // Set bullet speed
+            bulletRb.velocity = transform.forward * 200f;
             fireTimer = 0f;
             Bullet bulletScript = bullet.GetComponent<Bullet>();
             if (bulletScript != null)
             {
-                bulletScript.IsFromPlayer = true;  // Set the bullet source
+                bulletScript.IsFromPlayer = true;
             }
+        }
+    }
+
+    // Gradual brake function
+    private void GradualBrake()
+    {
+        speed = Mathf.MoveTowards(speed, minSpeed, (maxSpeed - minSpeed) / brakeBoostDuration * Time.deltaTime);
+        if (speed <= minSpeed)
+        {
+            isBraking = false;
+        }
+    }
+
+    // Gradual boost function
+    private void GradualBoost()
+    {
+        speed = Mathf.MoveTowards(speed, maxSpeed, (maxSpeed - minSpeed) / brakeBoostDuration * Time.deltaTime);
+        if (speed >= maxSpeed)
+        {
+            isBoosting = false;
+        }
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.pointerPress == brakeButton.gameObject)
+        {
+            isBraking = true;
+            isBoosting = false;
+        }
+        else if (eventData.pointerPress == boostButton.gameObject)
+        {
+            isBoosting = true;
+            isBraking = false;
+        }
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (eventData.pointerPress == brakeButton.gameObject)
+        {
+            isBraking = false;
+        }
+        else if (eventData.pointerPress == boostButton.gameObject)
+        {
+            isBoosting = false;
         }
     }
 }
