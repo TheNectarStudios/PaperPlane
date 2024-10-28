@@ -4,106 +4,108 @@ using System.Collections;
 public class EnemyAI : MonoBehaviour
 {
     public float despawnDistance;
-    public float moveSpeed = 50f;
-    public float rotationSpeed = 3f;
-    public float attackDistance = 150f;
+    public float moveSpeed = 20f;
+    public float maxSpeed = 30f;
+    public float minSpeed = 10f;
+    public float turnSpeed = 3f;
+    public float pitchSpeed = 2f;
+    public float rollSpeed = 1.5f;
     public float fireRange = 80f;
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float fireRate = 1.5f;
-    public float circleRadius = 200f;
-    public float reengageTime = 3f;
     public ParticleSystem explosionEffect;
+    public float liftForce = 5f;
+    public float gravityScale = 1f;
+    public float fireAngleThreshold = 10f; // Only fire if angle to player is within this threshold
 
     private float fireTimer = 0f;
     private Transform playerPlane;
     private Rigidbody rb;
     private bool isDead = false;
-    private bool isCircling = false;
+    private float currentSpeed;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
+        rb.useGravity = true;  // Enable gravity
+        rb.mass = 1.0f;  // Set mass to create realistic lift
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
             playerPlane = player.transform;
         }
+
+        currentSpeed = moveSpeed;
     }
 
     private void Update()
     {
         if (isDead || playerPlane == null) return;
-        
-        if (!isCircling)
-        {
-            PerformTacticalMove();
-        }
+
+        HandleMovement();
+        HandleFiring();
     }
 
-    private void PerformTacticalMove()
+    private void HandleMovement()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, playerPlane.position);
+        // Calculate direction to player
+        Vector3 directionToPlayer = (playerPlane.position - transform.position).normalized;
 
-        if (distanceToPlayer > attackDistance)
+        // Yaw and pitch towards the player
+        ApplyYawAndPitch(directionToPlayer);
+
+        // Move forward
+        rb.velocity = transform.forward * currentSpeed;
+
+        // Simulate lift to keep plane level
+        ApplyLiftForce();
+
+        // Adjust speed based on distance to player
+        float distanceToPlayer = Vector3.Distance(transform.position, playerPlane.position);
+        if (distanceToPlayer < fireRange)
         {
-            // Approach the attack distance
-            Vector3 directionToPlayer = (playerPlane.position - transform.position).normalized;
-            rb.velocity = directionToPlayer * moveSpeed;
+            currentSpeed = Mathf.Clamp(currentSpeed - Time.deltaTime * turnSpeed, minSpeed, maxSpeed);
         }
         else
         {
-            // Begin circling if within attack range
-            StartCoroutine(CirclePlayer());
+            currentSpeed = Mathf.Clamp(currentSpeed + Time.deltaTime * turnSpeed, minSpeed, maxSpeed);
         }
     }
 
-    private IEnumerator CirclePlayer()
+    private void ApplyYawAndPitch(Vector3 directionToPlayer)
     {
-        isCircling = true;
-
-        Vector3 circleCenter = playerPlane.position;
-        Vector3 directionToCircle = Vector3.Cross((transform.position - circleCenter).normalized, Vector3.up);
-
-        float circleTime = 0f;
-        while (circleTime < reengageTime)
-        {
-            Vector3 circlePosition = circleCenter + directionToCircle * circleRadius;
-            Vector3 directionToPosition = (circlePosition - transform.position).normalized;
-            
-            // Move towards the circular path and rotate towards the player
-            rb.velocity = directionToPosition * moveSpeed;
-            RotateTowardsPlayer();
-
-            if (Vector3.Distance(transform.position, playerPlane.position) <= fireRange)
-            {
-                HandleFiring();
-            }
-
-            circleTime += Time.deltaTime;
-            yield return null;
-        }
-
-        isCircling = false;
-    }
-
-    private void RotateTowardsPlayer()
-    {
-        Vector3 directionToPlayer = (playerPlane.position - transform.position).normalized;
+        // Calculate target rotation based on player position
         Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+
+        // Adjust roll to create a banked turn effect
+        float rollAngle = Mathf.Lerp(0, 45, Mathf.Abs(directionToPlayer.x)) * -Mathf.Sign(directionToPlayer.x);
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, rollAngle);
+    }
+
+    private void ApplyLiftForce()
+    {
+        Vector3 lift = Vector3.up * liftForce * currentSpeed * gravityScale;
+        rb.AddForce(lift - Physics.gravity * rb.mass);
     }
 
     private void HandleFiring()
     {
         fireTimer += Time.deltaTime;
 
-        if (fireTimer >= fireRate)
+        if (fireTimer >= fireRate && Vector3.Distance(transform.position, playerPlane.position) <= fireRange)
         {
-            Fire();
-            fireTimer = 0f;
+            // Check if plane is approximately pointing towards player
+            Vector3 directionToPlayer = (playerPlane.position - transform.position).normalized;
+            float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
+
+            if (angleToPlayer < fireAngleThreshold)
+            {
+                Fire();
+                fireTimer = 0f;
+            }
         }
     }
 
@@ -140,8 +142,7 @@ public class EnemyAI : MonoBehaviour
             explosionEffect.transform.SetParent(null);
             explosionEffect.Play();
         }
-        moveSpeed = 0;
-        rotationSpeed = 0;
+        rb.velocity = Vector3.zero;
         rb.useGravity = true;
         rb.constraints = RigidbodyConstraints.None;
         Destroy(gameObject, 5f);

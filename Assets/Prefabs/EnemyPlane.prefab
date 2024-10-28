@@ -398,18 +398,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   despawnDistance: 1014.9
-  moveSpeed: 2.07
-  rotationSpeed: 0.87
-  attackDistance: 253.1
-  fireRange: 150.6
+  moveSpeed: 73.7
+  maxSpeed: 104.7
+  minSpeed: 36.39
+  turnSpeed: 9.55
+  pitchSpeed: 2.48
+  rollSpeed: 1.94
+  fireRange: 171.2
   bulletPrefab: {fileID: 1164219440960762774, guid: 473fd4d1c9ef4714f841065962afeb73,
     type: 3}
   firePoint: {fileID: 5077669654028361684}
-  fireRate: 0.31
-  circleRadius: 178.7
-  reengageTime: 12.47
+  fireRate: 0.07
   explosionEffect: {fileID: 1978689737715041618, guid: afa54037ffe627545886e2741abb365d,
     type: 3}
+  liftForce: 5.84
+  gravityScale: 1
+  fireAngleThreshold: 10
 --- !u!65 &7037738547102856912
 BoxCollider:
   m_ObjectHideFlags: 0
