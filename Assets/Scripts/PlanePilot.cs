@@ -66,35 +66,49 @@ public class PaperPlanePilot : MonoBehaviour
         boostButton.onClick.AddListener(() => isBoosting = true);
     }
 
-    private void Update()
+private void Update()
+{
+    // Calculate desired camera position
+    Vector3 moveCamTo = transform.position - transform.forward * 10.0f + Vector3.up * 5.0f;
+
+    // Set maximum distance the camera can be from the plane
+    float maxCameraDistance = 15.0f; // Adjust this value as needed
+    float currentDistance = Vector3.Distance(transform.position, moveCamTo);
+
+    // If the current distance exceeds the max distance, adjust the camera position
+    if (currentDistance > maxCameraDistance)
     {
-        Vector3 moveCamTo = transform.position - transform.forward * 10.0f + Vector3.up * 5.0f;
-        float bias = 0.96f;
-        Camera.main.transform.position = Camera.main.transform.position * bias + moveCamTo * (1.0f - bias);
-        Camera.main.transform.LookAt(transform.position + transform.forward * 30.0f);
-
-        rb.velocity = transform.forward * speed;
-
-        float horizontalInput = joystick.Horizontal;
-        float verticalInput = joystick.Vertical;
-
-        ApplyYaw(horizontalInput);
-        ApplyPitch(verticalInput);
-        AdjustSpeedWithAltitude(verticalInput);
-        CheckTerrainCollision();
-
-        fireTimer += Time.deltaTime;
-
-        // Apply gradual braking or boosting over time
-        if (isBraking)
-        {
-            GradualBrake();
-        }
-        else if (isBoosting)
-        {
-            GradualBoost();
-        }
+        Vector3 direction = (moveCamTo - transform.position).normalized;
+        moveCamTo = transform.position + direction * maxCameraDistance;
     }
+
+    // Smoothly move the camera to the desired position
+    float bias = 0.96f;
+    Camera.main.transform.position = Camera.main.transform.position * bias + moveCamTo * (1.0f - bias);
+    Camera.main.transform.LookAt(transform.position + transform.forward * 30.0f);
+
+    rb.velocity = transform.forward * speed;
+
+    float horizontalInput = joystick.Horizontal;
+    float verticalInput = joystick.Vertical;
+
+    ApplyYaw(horizontalInput);
+    ApplyPitch(verticalInput);
+    AdjustSpeedWithAltitude(verticalInput);
+    CheckTerrainCollision();
+
+    fireTimer += Time.deltaTime;
+
+    // Apply gradual braking or boosting over time
+    if (isBraking)
+    {
+        GradualBrake();
+    }
+    else if (isBoosting)
+    {
+        GradualBoost();
+    }
+}
 
     private void ApplyYaw(float horizontalInput)
     {

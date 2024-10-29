@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI; // Add this for Image component
 using System.Collections;
 
 public class PlaneHealthController : MonoBehaviour
@@ -10,6 +11,7 @@ public class PlaneHealthController : MonoBehaviour
     public GameObject explosionEffect;
     public AudioSource explosionSound;
     public PaperPlanePilot planeController;
+    public Image healthBarImage; // Image component for the health bar
 
     private bool isDestroyed = false;
     public GameObject[] planeParts;
@@ -17,6 +19,9 @@ public class PlaneHealthController : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
+
+        // Set the health bar to full
+        UpdateHealthUI();
 
         // Ensure particle effects are inactive initially
         if (smokeEffect != null)
@@ -34,7 +39,7 @@ public class PlaneHealthController : MonoBehaviour
 
     void Update()
     {
-        if (!isDestroyed && currentHealth <= maxHealth / 2)
+        if (!isDestroyed && currentHealth <= maxHealth / 1.2f)
         {
             if (smokeEffect != null && !smokeEffect.activeSelf)
             {
@@ -51,8 +56,20 @@ public class PlaneHealthController : MonoBehaviour
         currentHealth -= amount;
         Debug.Log("Plane took damage. Current health: " + currentHealth);
 
+        // Update health UI
+        UpdateHealthUI();
+
         if (currentHealth <= 0)
             TriggerDestruction();
+    }
+
+    private void UpdateHealthUI()
+    {
+        if (healthBarImage != null)
+        {
+            // Set fill amount based on the health percentage
+            healthBarImage.fillAmount = (float)currentHealth / maxHealth;
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -67,38 +84,44 @@ public class PlaneHealthController : MonoBehaviour
         }
     }
 
-    void TriggerDestruction()
+void TriggerDestruction()
+{
+    if (isDestroyed) return;
+
+    isDestroyed = true;
+    planeController.enabled = false;
+
+    // Set health bar instantly to zero
+    if (healthBarImage != null)
     {
-        if (isDestroyed) return;
-
-        isDestroyed = true;
-        planeController.enabled = false;
-
-        // Trigger explosion effect and sound
-        if (explosionEffect != null)
-        {
-            explosionEffect.SetActive(true);
-            Debug.Log("Explosion effect activated.");
-        }
-        
-        if (explosionSound != null && !explosionSound.isPlaying)
-        {
-            explosionSound.Play();
-            Debug.Log("Explosion sound played.");
-        }
-
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.velocity = transform.forward * 5f;
-            rb.useGravity = true;
-        }
-
-        StartCoroutine(BreakApartSequence());
-
-        // Load Game Over scene after a delay
-        Invoke("LoadGameOverScene", 3f);
+        healthBarImage.fillAmount = 0f;
     }
+
+    // Trigger explosion effect and sound
+    if (explosionEffect != null)
+    {
+        explosionEffect.SetActive(true);
+        Debug.Log("Explosion effect activated.");
+    }
+    
+    if (explosionSound != null && !explosionSound.isPlaying)
+    {
+        explosionSound.Play();
+        Debug.Log("Explosion sound played.");
+    }
+
+    Rigidbody rb = GetComponent<Rigidbody>();
+    if (rb != null)
+    {
+        rb.velocity = transform.forward * 5f;
+        rb.useGravity = true;
+    }
+
+    StartCoroutine(BreakApartSequence());
+
+    // Load Game Over scene after a delay
+    Invoke("LoadGameOverScene", 3f);
+}
 
     IEnumerator BreakApartSequence()
     {
