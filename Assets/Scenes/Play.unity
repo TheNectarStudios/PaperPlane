@@ -2071,7 +2071,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   minAltitude: 0
-  raycastDistance: 20
+  raycastDistance: 28.7
   rb: {fileID: 1573875836}
   liftForce: 5
   gravityScale: 0.5
