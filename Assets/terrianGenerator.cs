@@ -9,6 +9,7 @@ public class TerrainGenerator : MonoBehaviour
     public int terrainChunkSize = 1000; // Adjusted for 1000x1000 terrain chunks
     public int chunksVisible = 2;      // Reduce this to lower the number of loaded chunks (2 chunks in each direction)
     public int geometricShapeCount = 10; // Number of shapes to spawn per chunk
+    public float minSpawnDistance = 50f; // Minimum distance between shapes to avoid overlap
 
     private Vector3 lastPlayerPosition;
     private Dictionary<Vector2, GameObject> terrainChunks = new Dictionary<Vector2, GameObject>();
@@ -93,28 +94,56 @@ public class TerrainGenerator : MonoBehaviour
         SpawnGeometricShapes(newChunk.transform);
     }
 
-void SpawnGeometricShapes(Transform terrainTransform)
-{
-    for (int i = 0; i < geometricShapeCount; i++)
+    void SpawnGeometricShapes(Transform terrainTransform)
     {
-        // Select a random geometric shape from the array
-        GameObject randomShape = geometricPrefabs[Random.Range(0, geometricPrefabs.Length)];
+        List<Vector3> spawnPositions = new List<Vector3>(); // Store positions to check for overlap
 
-        // Randomize the position within the terrain chunk
-        Vector3 randomPosition = new Vector3(
-            Random.Range(-terrainChunkSize / 2, terrainChunkSize / 2),  // X-axis within the chunk width
-            Random.Range(0f, 5f),  // Y-axis for height (adjust based on your design)
-            Random.Range(-terrainChunkSize / 2, terrainChunkSize / 2)   // Z-axis within the chunk length
-        );
+        for (int i = 0; i < geometricShapeCount; i++)
+        {
+            GameObject randomShape = geometricPrefabs[Random.Range(0, geometricPrefabs.Length)];
+            Vector3 randomPosition;
 
-        // Instantiate the shape on the terrain
-        GameObject shapeInstance = Instantiate(randomShape, randomPosition + terrainTransform.position, Quaternion.identity);
-        shapeInstance.transform.SetParent(terrainTransform);  // Set the shape as a child of the terrain for proper chunk management
+            // Try to find a position far enough from other shapes
+            int maxAttempts = 10;
+            int attempts = 0;
+            bool positionFound = false;
+            do
+            {
+                randomPosition = new Vector3(
+                    Random.Range(-terrainChunkSize / 2, terrainChunkSize / 2),  // X-axis within the chunk width
+                    0,  // Y-axis set to 0 to maintain consistent height
+                    Random.Range(-terrainChunkSize / 2, terrainChunkSize / 2)   // Z-axis within the chunk length
+                ) + terrainTransform.position;
 
-        // Randomize the scale of the shape
-        float randomScale = Random.Range(20f, 40f); // Adjust the range as needed
-        shapeInstance.transform.localScale = new Vector3(randomScale, randomScale, randomScale);
+                positionFound = true;
+                foreach (Vector3 pos in spawnPositions)
+                {
+                    if (Vector3.Distance(pos, randomPosition) < minSpawnDistance)
+                    {
+                        positionFound = false;
+                        break;
+                    }
+                }
+                attempts++;
+            } while (!positionFound && attempts < maxAttempts);
+
+            if (!positionFound)
+            {
+                Debug.LogWarning("Failed to find non-overlapping position for shape " + i);
+                continue;
+            }
+
+            // Instantiate the shape with a rotation of -90 degrees on the X-axis
+            Quaternion rotation = Quaternion.Euler(-90, 0, 0);
+            GameObject shapeInstance = Instantiate(randomShape, randomPosition, rotation);
+            shapeInstance.transform.SetParent(terrainTransform);
+
+            // Randomize the scale of the shape
+            float randomScale = Random.Range(20f, 40f); // Adjust the range as needed
+            shapeInstance.transform.localScale = new Vector3(randomScale, randomScale, randomScale);
+
+            // Add the position to the list for future overlap checking
+            spawnPositions.Add(randomPosition);
+        }
     }
-}
-
 }

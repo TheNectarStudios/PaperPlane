@@ -6,8 +6,8 @@ public class PlaneHealthController : MonoBehaviour
 {
     public int maxHealth = 100;
     private int currentHealth;
-    public ParticleSystem smokeEffect;
-    public ParticleSystem explosionEffect;
+    public GameObject smokeEffect;
+    public GameObject explosionEffect;
     public AudioSource explosionSound;
     public PaperPlanePilot planeController;
 
@@ -18,17 +18,17 @@ public class PlaneHealthController : MonoBehaviour
     {
         currentHealth = maxHealth;
 
-        // Ensure particle effects are stopped initially
+        // Ensure particle effects are inactive initially
         if (smokeEffect != null)
         {
-            smokeEffect.Stop();
-            Debug.Log("Smoke effect stopped initially.");
+            smokeEffect.SetActive(false);
+            Debug.Log("Smoke effect set inactive initially.");
         }
         
         if (explosionEffect != null)
         {
-            explosionEffect.Stop();
-            Debug.Log("Explosion effect stopped initially.");
+            explosionEffect.SetActive(false);
+            Debug.Log("Explosion effect set inactive initially.");
         }
     }
 
@@ -36,10 +36,10 @@ public class PlaneHealthController : MonoBehaviour
     {
         if (!isDestroyed && currentHealth <= maxHealth / 2)
         {
-            if (smokeEffect != null && !smokeEffect.isPlaying)
+            if (smokeEffect != null && !smokeEffect.activeSelf)
             {
-                smokeEffect.Play();
-                Debug.Log("Smoke effect started due to low health.");
+                smokeEffect.SetActive(true);
+                Debug.Log("Smoke effect activated due to low health.");
             }
         }
     }
@@ -75,8 +75,11 @@ public class PlaneHealthController : MonoBehaviour
         planeController.enabled = false;
 
         // Trigger explosion effect and sound
-            explosionEffect.Play();
-            Debug.Log("Explosion effect triggered.");
+        if (explosionEffect != null)
+        {
+            explosionEffect.SetActive(true);
+            Debug.Log("Explosion effect activated.");
+        }
         
         if (explosionSound != null && !explosionSound.isPlaying)
         {
